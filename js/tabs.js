@@ -92,33 +92,7 @@ const tabs = {
                 const domainTabs = tabsByDomain[domain];
                 if (domainTabs.length === 0) return;
 
-                const domainGroup = utils.createElement('div', {
-                    className: 'domain-group'
-                });
-
-                const domainHeader = utils.createElement('div', {
-                    className: 'domain-header'
-                });
-
-                const domainTitle = utils.createElement('span', {
-                    className: 'domain-title',
-                    textContent: domain === 'other' ? 'Other' : domain
-                });
-
-                const tabCount = utils.createElement('span', {
-                    className: 'tab-count',
-                    textContent: domainTabs.length
-                });
-
-                domainHeader.appendChild(domainTitle);
-                domainHeader.appendChild(tabCount);
-                domainGroup.appendChild(domainHeader);
-
-                domainTabs.forEach(tab => {
-                    const tabEl = createTabElement(tab, false);
-                    domainGroup.appendChild(tabEl);
-                });
-
+                const domainGroup = createDomainGroup(domain, domainTabs);
                 container.appendChild(domainGroup);
             });
         } catch (error) {
@@ -180,4 +154,40 @@ function createTabElement(tab, isActive) {
     });
 
     return tabEl;
+}
+
+function createDomainGroup(domain, tabs) {
+    const domainGroup = utils.createElement('div', {
+        className: 'domain-group'
+    });
+
+    const domainHeader = utils.createElement('div', {
+        className: 'domain-header'
+    });
+
+    const domainTitle = utils.createElement('span', {
+        className: 'domain-title',
+        textContent: domain === 'other' ? 'Other' : domain
+    });
+
+    const tabCount = utils.createElement('span', {
+        className: 'tab-count',
+        textContent: tabs.length
+    });
+
+    domainHeader.appendChild(domainTitle);
+    domainHeader.appendChild(tabCount);
+    domainGroup.appendChild(domainHeader);
+
+    const tabsGroup = utils.createElement('div', {
+        className: 'tabs-group'
+    });
+
+    tabs.forEach(tab => {
+        const tabEl = createTabElement(tab, false);
+        tabsGroup.appendChild(tabEl);
+    });
+
+    domainGroup.appendChild(tabsGroup);
+    return domainGroup;
 } 
