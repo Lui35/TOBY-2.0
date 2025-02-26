@@ -30,20 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         search.init();
 
-        // Set up collapse all button
-        const collapseAllBtn = document.getElementById('collapseAll');
-        if (collapseAllBtn) {
-            collapseAllBtn.addEventListener('click', () => {
-                const collections = document.getElementsByClassName('collection');
-                Array.from(collections).forEach(collection => {
-                    const itemsContainer = collection.querySelector('.collection-items');
-                    if (itemsContainer) {
-                        itemsContainer.style.display = itemsContainer.style.display === 'none' ? 'block' : 'none';
-                    }
-                });
-            });
-        }
-
         // Set up keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             // Focus search input when pressing '/'

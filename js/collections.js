@@ -469,18 +469,11 @@ const collections = {
                     style: 'display: flex; align-items: center; gap: 8px;'
                 });
 
-                const collapseBtn = utils.createElement('button', {
-                    className: 'collapse-btn',
-                    textContent: '▼',
-                    style: 'background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-color); opacity: 0.7;'
-                });
-
                 const title = utils.createElement('div', {
                     className: 'collection-title',
                     textContent: collection.name
                 });
 
-                titleContainer.appendChild(collapseBtn);
                 titleContainer.appendChild(title);
 
                 const buttonsContainer = utils.createElement('div', {
