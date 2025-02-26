@@ -464,23 +464,49 @@ const collections = {
                     className: 'collection-header'
                 });
 
+                const titleContainer = utils.createElement('div', {
+                    className: 'collection-title-container',
+                    style: 'display: flex; align-items: center; gap: 8px;'
+                });
+
+                const collapseBtn = utils.createElement('button', {
+                    className: 'collapse-btn',
+                    textContent: '▼',
+                    style: 'background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-color); opacity: 0.7;'
+                });
+
                 const title = utils.createElement('div', {
                     className: 'collection-title',
                     textContent: collection.name
                 });
 
-                title.addEventListener('click', () => {
-                    collections.showEditModal(collection.id, collection.name);
+                titleContainer.appendChild(collapseBtn);
+                titleContainer.appendChild(title);
+
+                const buttonsContainer = utils.createElement('div', {
+                    className: 'collection-header-buttons'
+                });
+
+                const editBtn = utils.createElement('button', {
+                    className: 'edit-collection',
+                    textContent: '✎',
+                    title: 'Edit collection'
                 });
 
                 const deleteBtn = utils.createElement('button', {
                     className: 'delete-collection',
-                    textContent: '🗑️'
+                    textContent: '🗑️',
+                    title: 'Delete collection'
                 });
+
+                editBtn.addEventListener('click', () => collections.showEditModal(collection.id, collection.name));
                 deleteBtn.addEventListener('click', () => collections.delete(collection.id));
 
-                header.appendChild(title);
-                header.appendChild(deleteBtn);
+                buttonsContainer.appendChild(editBtn);
+                buttonsContainer.appendChild(deleteBtn);
+
+                header.appendChild(titleContainer);
+                header.appendChild(buttonsContainer);
 
                 const itemsContainer = utils.createElement('div', {
                     className: 'collection-items'
