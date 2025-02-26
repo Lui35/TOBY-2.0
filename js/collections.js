@@ -1,5 +1,6 @@
 const collections = {
     data: [],
+    selectedItem: null,
 
     /**
      * Initialize collections
@@ -21,9 +22,102 @@ const collections = {
             if (collectionsContainer) {
                 utils.makeDroppable(collectionsContainer, collections.handleDrop);
             }
+
+            // Add keyboard event listener for reordering
+            document.addEventListener('keydown', collections.handleKeyPress);
         } catch (error) {
             console.error('Error initializing collections:', error);
             collections.data = [];
+        }
+    },
+
+    /**
+     * Handle keyboard events for reordering
+     * @param {KeyboardEvent} e - Keyboard event
+     */
+    handleKeyPress: async (e) => {
+        if (!collections.selectedItem) return;
+
+        const { collectionId, itemId } = collections.selectedItem;
+        const collection = collections.data.find(c => c.id === collectionId);
+        if (!collection) return;
+
+        const currentIndex = collection.items.findIndex(item => item.id === itemId);
+        if (currentIndex === -1) return;
+
+        let newIndex = currentIndex;
+
+        if (e.key === 'ArrowLeft' && currentIndex > 0) {
+            newIndex = currentIndex - 1;
+        } else if (e.key === 'ArrowRight' && currentIndex < collection.items.length - 1) {
+            newIndex = currentIndex + 1;
+        } else {
+            return;
+        }
+
+        // Get the current item element and its container
+        const itemsContainer = document.querySelector(`.collection[data-id="${collectionId}"] .collection-items`);
+        const currentItem = itemsContainer.querySelector(`.item[data-id="${itemId}"]`);
+        const targetItem = Array.from(itemsContainer.children)[newIndex];
+        if (!currentItem || !targetItem || !itemsContainer) return;
+
+        // Calculate positions for smooth animation
+        const currentRect = currentItem.getBoundingClientRect();
+        const targetRect = targetItem.getBoundingClientRect();
+        const deltaX = targetRect.left - currentRect.left;
+        const deltaY = targetRect.top - currentRect.top;
+
+        // Animate current item
+        currentItem.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        currentItem.classList.add('reordering');
+
+        // Animate target item
+        targetItem.style.transform = `translate(${-deltaX}px, ${-deltaY}px)`;
+        targetItem.classList.add('reordering');
+
+        // Update data array
+        const [item] = collection.items.splice(currentIndex, 1);
+        collection.items.splice(newIndex, 0, item);
+
+        // Wait for animation
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Update DOM without re-rendering
+        if (newIndex > currentIndex) {
+            targetItem.insertAdjacentElement('afterend', currentItem);
+        } else {
+            targetItem.insertAdjacentElement('beforebegin', currentItem);
+        }
+
+        // Reset transforms
+        currentItem.style.transform = '';
+        targetItem.style.transform = '';
+        currentItem.classList.remove('reordering');
+        targetItem.classList.remove('reordering');
+
+        // Save changes
+        await collections.save();
+    },
+
+    /**
+     * Select an item
+     * @param {string} collectionId - Collection ID
+     * @param {string} itemId - Item ID
+     */
+    selectItem: (collectionId, itemId) => {
+        // Clear previous selection
+        const previousSelected = document.querySelector('.item.selected');
+        if (previousSelected) {
+            previousSelected.classList.remove('selected');
+        }
+
+        // Update selected item
+        collections.selectedItem = { collectionId, itemId };
+
+        // Add selected class to new item
+        const newSelected = document.querySelector(`.item[data-id="${itemId}"]`);
+        if (newSelected) {
+            newSelected.classList.add('selected');
         }
     },
 
@@ -395,7 +489,8 @@ const collections = {
                 if (Array.isArray(collection.items)) {
                     collection.items.forEach(item => {
                         const itemEl = utils.createElement('div', {
-                            className: 'item'
+                            className: `item${collections.selectedItem?.itemId === item.id ? ' selected' : ''}`,
+                            'data-id': item.id
                         });
 
                         const favicon = utils.createElement('img', {
@@ -410,6 +505,17 @@ const collections = {
                         const itemTitle = utils.createElement('span', {
                             className: 'title',
                             textContent: item.title
+                        });
+
+                        const selectBtn = utils.createElement('button', {
+                            className: 'select-btn',
+                            textContent: '⋮',
+                            title: 'Select for reordering'
+                        });
+
+                        selectBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            collections.selectItem(collection.id, item.id);
                         });
 
                         const editBtn = utils.createElement('button', {
@@ -434,6 +540,7 @@ const collections = {
 
                         itemEl.appendChild(favicon);
                         itemEl.appendChild(itemTitle);
+                        itemEl.appendChild(selectBtn);
                         itemEl.appendChild(editBtn);
                         itemEl.appendChild(removeBtn);
 

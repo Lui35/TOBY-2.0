@@ -392,6 +392,8 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
     padding: 16px;
+    min-height: 50px;
+    position: relative;
 }
 
 /* Common styles for both tab items and collection items */
@@ -405,15 +407,16 @@ body {
     border-radius: 6px;
     padding: 8px 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
     min-height: 40px;
     position: relative;
+    transform: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform;
 }
 
 .tab-item:hover,
 .collection .item:hover {
     background-color: var(--item-hover-bg);
-    transform: translateY(-1px);
     box-shadow: 0 2px 4px var(--modal-shadow-color);
 }
 
@@ -709,4 +712,47 @@ body {
 .remove-item:hover {
     opacity: 1 !important;
     background-color: var(--button-hover-bg);
+}
+
+/* Select button styles */
+.select-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    opacity: 0;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 1rem;
+    line-height: 1;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.item:hover .select-btn {
+    opacity: 0.6;
+}
+
+.select-btn:hover {
+    opacity: 1 !important;
+    background-color: var(--button-hover-bg);
+}
+
+/* Selected item styles */
+.item.selected {
+    outline: 2px solid var(--accent-color);
+    background-color: var(--active-tab-bg-color);
+    z-index: 2;
+}
+
+.item.selected .select-btn {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+/* Reorder animation */
+.item.reordering {
+    transition: transform 0.2s ease-in-out;
+    pointer-events: none;
+    z-index: 3;
 } 
