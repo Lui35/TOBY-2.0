@@ -25,6 +25,9 @@ const collections = {
 
             // Add keyboard event listener for reordering
             document.addEventListener('keydown', collections.handleKeyPress);
+            
+            // Add click event listener to deselect items when clicking outside
+            document.addEventListener('click', collections.handleDocumentClick);
         } catch (error) {
             console.error('Error initializing collections:', error);
             collections.data = [];
@@ -100,11 +103,52 @@ const collections = {
     },
 
     /**
+     * Handle document click to deselect items
+     * @param {MouseEvent} e - Mouse event
+     */
+    handleDocumentClick: (e) => {
+        // If no item is selected, do nothing
+        if (!collections.selectedItem) return;
+        
+        // Check if click was on an item or its child elements
+        const clickedOnItem = e.target.closest('.item');
+        const clickedOnSelectBtn = e.target.closest('.select-btn');
+        
+        // If clicked outside an item or on a different item than the selected one, deselect
+        if (!clickedOnItem && !clickedOnSelectBtn) {
+            collections.deselectItem();
+        }
+    },
+    
+    /**
+     * Deselect the currently selected item
+     */
+    deselectItem: () => {
+        // Clear previous selection
+        const previousSelected = document.querySelector('.item.selected');
+        if (previousSelected) {
+            previousSelected.classList.remove('selected');
+        }
+        
+        // Reset selected item
+        collections.selectedItem = null;
+    },
+
+    /**
      * Select an item
      * @param {string} collectionId - Collection ID
      * @param {string} itemId - Item ID
      */
     selectItem: (collectionId, itemId) => {
+        // Check if the same item is being selected again
+        if (collections.selectedItem && 
+            collections.selectedItem.collectionId === collectionId && 
+            collections.selectedItem.itemId === itemId) {
+            // If the same item is clicked, deselect it
+            collections.deselectItem();
+            return;
+        }
+        
         // Clear previous selection
         const previousSelected = document.querySelector('.item.selected');
         if (previousSelected) {
