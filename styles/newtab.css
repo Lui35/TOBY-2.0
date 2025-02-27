@@ -148,8 +148,15 @@ body {
 .tab-item .favicon {
     width: 16px;
     height: 16px;
+    min-width: 16px;
+    object-fit: contain;
+    background-color: var(--favicon-bg-color, rgba(255, 255, 255, 0.8));
+    border-radius: 3px;
+    padding: 1px;
+    box-shadow: 0 0 0 1px var(--favicon-border-color, rgba(0, 0, 0, 0.1));
     margin-right: 0.75rem;
     flex-shrink: 0;
+    filter: var(--favicon-filter);
 }
 
 .tab-item .title {
@@ -430,6 +437,11 @@ body {
     height: 16px;
     min-width: 16px;
     object-fit: contain;
+    background-color: var(--favicon-bg-color, rgba(255, 255, 255, 0.8));
+    border-radius: 3px;
+    padding: 1px;
+    box-shadow: 0 0 0 1px var(--favicon-border-color, rgba(0, 0, 0, 0.1));
+    filter: var(--favicon-filter);
 }
 
 /* Title styles */

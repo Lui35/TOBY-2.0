@@ -24,6 +24,9 @@
     --tooltip-bg-color: rgba(0, 0, 0, 0.8);
     --tooltip-text-color: #ffffff;
     --hover-color: rgba(0, 0, 0, 0.05);
+    --favicon-bg-color: rgba(240, 240, 240, 0.9);
+    --favicon-border-color: rgba(0, 0, 0, 0.15);
+    --favicon-filter: contrast(0.95) drop-shadow(0 0 1px rgba(0, 0, 0, 0.2));
 }
 
 /* Dark Theme */
@@ -51,12 +54,59 @@
     --tooltip-bg-color: rgba(255, 255, 255, 0.8);
     --tooltip-text-color: #1e1e1e;
     --hover-color: rgba(255, 255, 255, 0.1);
+    --favicon-bg-color: rgba(60, 60, 60, 0.9);
+    --favicon-border-color: rgba(255, 255, 255, 0.25);
+    --favicon-filter: contrast(1.05) drop-shadow(0 0 1px rgba(0, 0, 0, 0.5));
 }
 
 /* Apply theme colors */
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
+}
+
+/* Special favicon handling for specific domains */
+[data-theme="light"] img.favicon[src*="github.com"] {
+    filter: invert(0.8) brightness(0.2) contrast(1.2);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] img.favicon[src*="github.com"] {
+    filter: brightness(1.5);
+    background-color: rgba(40, 40, 40, 0.95);
+}
+
+/* Other common sites with white logos that need special handling in light mode */
+[data-theme="light"] img.favicon[src*="twitter.com"],
+[data-theme="light"] img.favicon[src*="x.com"] {
+    filter: invert(0.7) brightness(0.3) contrast(1.1);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] img.favicon[src*="figma.com"] {
+    filter: invert(0.6) brightness(0.4) contrast(1.1);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] img.favicon[src*="notion.so"] {
+    filter: invert(0.8) brightness(0.2) contrast(1.2);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] img.favicon[src*="slack.com"] {
+    filter: invert(0.5) brightness(0.5) contrast(1.1);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Add a subtle border to all favicons for better visibility */
+img.favicon {
+    box-shadow: 0 0 0 1px var(--favicon-border-color), 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Special class for white favicons detected by JavaScript */
+[data-theme="light"] img.favicon.white-favicon {
+    filter: invert(0.7) brightness(0.3) contrast(1.1);
+    background-color: rgba(255, 255, 255, 0.95);
 }
 
 button {
