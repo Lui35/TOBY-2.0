@@ -21,6 +21,9 @@
     --focus-border-color: #90caf9;
     --drag-over-bg-color: rgba(33, 150, 243, 0.05);
     --drag-over-border-color: #2196f3;
+    --tooltip-bg-color: rgba(0, 0, 0, 0.8);
+    --tooltip-text-color: #ffffff;
+    --hover-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Dark Theme */
@@ -45,6 +48,9 @@
     --focus-border-color: #64b5f6;
     --drag-over-bg-color: rgba(100, 181, 246, 0.1);
     --drag-over-border-color: #64b5f6;
+    --tooltip-bg-color: rgba(255, 255, 255, 0.8);
+    --tooltip-text-color: #1e1e1e;
+    --hover-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Apply theme colors */

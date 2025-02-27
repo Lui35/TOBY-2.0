@@ -636,5 +636,98 @@ const collections = {
         } catch (error) {
             console.error('Error rendering collections:', error);
         }
-    }
+    },
+
+    /**
+     * Export collections to JSON file
+     */
+    exportCollections: () => {
+        try {
+            // Create a JSON string of the collections data
+            const collectionsData = JSON.stringify(collections.data, null, 2);
+            
+            // Create a Blob with the JSON data
+            const blob = new Blob([collectionsData], { type: 'application/json' });
+            
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+            
+            // Create a temporary anchor element to trigger the download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `toby-collections-${new Date().toISOString().split('T')[0]}.json`;
+            
+            // Append the anchor to the body, click it, and remove it
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        } catch (error) {
+            console.error('Error exporting collections:', error);
+            alert('Failed to export collections. Please try again.');
+        }
+    },
+
+    /**
+     * Import collections from JSON file
+     */
+    importCollections: () => {
+        try {
+            // Create a file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            
+            // Add change event listener to handle the selected file
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // Read the file content
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        // Parse the JSON data
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        // Validate the imported data
+                        if (!Array.isArray(importedData)) {
+                            throw new Error('Invalid import format. Expected an array of collections.');
+                        }
+                        
+                        // Confirm import with the user
+                        if (confirm(`Import ${importedData.length} collections? This will merge with your existing collections.`)) {
+                            // Merge the imported collections with existing ones
+                            // Add only collections that don't exist (based on ID)
+                            const existingIds = collections.data.map(c => c.id);
+                            const newCollections = importedData.filter(c => !existingIds.includes(c.id));
+                            
+                            collections.data = [...collections.data, ...newCollections];
+                            
+                            // Save and render the updated collections
+                            await collections.save();
+                            collections.render();
+                            
+                            alert(`Successfully imported ${newCollections.length} new collections.`);
+                        }
+                    } catch (error) {
+                        console.error('Error processing import file:', error);
+                        alert('Failed to import collections. The file may be invalid or corrupted.');
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            // Trigger the file selection dialog
+            fileInput.click();
+        } catch (error) {
+            console.error('Error importing collections:', error);
+            alert('Failed to import collections. Please try again.');
+        }
+    },
 }; 

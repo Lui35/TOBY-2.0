@@ -31,11 +31,28 @@ body {
 .header h1 {
     font-size: 1.5rem;
     font-weight: 600;
+    margin-right: 1rem;
 }
 
 .header-controls {
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.import-btn, .export-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.import-btn:hover, .export-btn:hover {
+    background-color: var(--hover-color);
 }
 
 /* Buttons */
@@ -130,6 +147,19 @@ button:hover {
     width: 16px;
     height: 16px;
     margin-right: 0.5rem;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background-color: var(--tooltip-bg-color, rgba(0, 0, 0, 0.8));
+    color: var(--tooltip-text-color, white);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 /* Drag and Drop */

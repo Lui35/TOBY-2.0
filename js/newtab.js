@@ -66,6 +66,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
+        // Set up import/export buttons
+        const importBtn = document.getElementById('importCollections');
+        const exportBtn = document.getElementById('exportCollections');
+        
+        if (importBtn) {
+            importBtn.addEventListener('click', collections.importCollections);
+        }
+        
+        if (exportBtn) {
+            exportBtn.addEventListener('click', collections.exportCollections);
+        }
+
         // Initialize tooltips
         const buttons = document.querySelectorAll('button[title]');
         buttons.forEach(button => {
