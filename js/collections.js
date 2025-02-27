@@ -369,6 +369,32 @@ const collections = {
      */
     delete: async (id) => {
         try {
+            const collectionIndex = collections.data.findIndex(c => c.id === id);
+            
+            if (collectionIndex === -1) {
+                console.error('Collection not found:', id);
+                return;
+            }
+            
+            const collection = collections.data[collectionIndex];
+            
+            // Initial confirmation with collection name
+            const confirmDelete = confirm(`Are you sure you want to delete the collection "${collection.name}"?`);
+            
+            if (!confirmDelete) {
+                return;
+            }
+            
+            // Additional warning if collection has items
+            if (collection.items && collection.items.length > 0) {
+                const itemCount = collection.items.length;
+                const confirmWithItems = confirm(`This collection contains ${itemCount} item${itemCount !== 1 ? 's' : ''}. Are you sure you want to delete it?`);
+                
+                if (!confirmWithItems) {
+                    return;
+                }
+            }
+            
             collections.data = collections.data.filter(c => c.id !== id);
             await collections.save();
             collections.render();
@@ -423,7 +449,21 @@ const collections = {
     removeItem: async (collectionId, itemId) => {
         try {
             const collection = collections.data.find(c => c.id === collectionId);
-            if (collection) {
+            if (!collection) {
+                console.error('Collection not found:', collectionId);
+                return;
+            }
+            
+            const item = collection.items.find(i => i.id === itemId);
+            if (!item) {
+                console.error('Item not found in collection:', itemId);
+                return;
+            }
+            
+            // Show confirmation dialog
+            const confirmRemoval = confirm(`Are you sure you want to remove "${item.title}" from "${collection.name}"?`);
+            
+            if (confirmRemoval) {
                 collection.items = collection.items.filter(item => item.id !== itemId);
                 await collections.save();
                 collections.render();
@@ -538,9 +578,7 @@ const collections = {
 
                 editBtn.addEventListener('click', () => collections.showEditModal(collection.id, collection.name));
                 deleteBtn.addEventListener('click', () => {
-                    if (confirm(`Are you sure you want to delete the collection "${collection.name}"?`)) {
-                        collections.delete(collection.id);
-                    }
+                    collections.delete(collection.id);
                 });
 
                 buttonsContainer.appendChild(editBtn);
