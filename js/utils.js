@@ -55,17 +55,24 @@ const utils = {
      * @param {Function} onDrop - Callback function when item is dropped
      */
     makeDroppable: (element, onDrop) => {
+        let dragLeaveTimer;
+        
         element.addEventListener('dragover', (e) => {
             e.preventDefault();
+            clearTimeout(dragLeaveTimer);
             element.classList.add('drag-over');
         });
 
         element.addEventListener('dragleave', () => {
-            element.classList.remove('drag-over');
+            // Add a short delay before removing the class to prevent flickering
+            dragLeaveTimer = setTimeout(() => {
+                element.classList.remove('drag-over');
+            }, 50); // 50ms delay
         });
 
         element.addEventListener('drop', (e) => {
             e.preventDefault();
+            clearTimeout(dragLeaveTimer);
             element.classList.remove('drag-over');
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
