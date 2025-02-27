@@ -29,6 +29,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw new Error('Search module not properly loaded');
         }
         search.init();
+        
+        // Initialize global search
+        if (!globalSearch || typeof globalSearch.init !== 'function') {
+            throw new Error('Global search module not properly loaded');
+        }
+        globalSearch.init();
 
         // Set up keyboard shortcuts
         document.addEventListener('keydown', (e) => {
