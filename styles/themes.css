@@ -1,16 +1,17 @@
 /* Light Theme */
 [data-theme="light"] {
-    --bg-color: #ffffff;
+    --bg-color: #f8f9fa;
     --text-color: #333333;
     --border-color: #e0e0e0;
     --accent-color: #2196f3;
     --item-bg: #ffffff;
     --item-hover-bg: #f5f5f5;
+    --button-bg: #ffffff;
     --button-hover-bg: rgba(0, 0, 0, 0.05);
     --active-tab-bg-color: #e3f2fd;
     --active-tab-border-color: #90caf9;
-    --count-bg-color: #f0f0f0;
-    --count-text-color: #666666;
+    --count-bg-color: #e9ecef;
+    --count-text-color: #495057;
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --modal-bg-color: #ffffff;
     --modal-shadow-color: rgba(0, 0, 0, 0.15);
@@ -62,8 +63,47 @@ button:hover {
     background-color: var(--button-hover-bg);
 }
 
+/* Button styles for light theme */
+[data-theme="light"] button {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+[data-theme="light"] button:hover {
+    background-color: #f5f5f5;
+    border-color: #d0d0d0;
+}
+
+[data-theme="light"] .modal-button.confirm {
+    background-color: #2196f3;
+    color: #ffffff;
+    border: none;
+}
+
+[data-theme="light"] .modal-button.confirm:hover {
+    background-color: #1976d2;
+}
+
+/* Active tab styles */
+[data-theme="light"] .tab-item.active {
+    background-color: #e3f2fd;
+    border-color: #90caf9;
+    color: #1976d2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .item.selected {
+    background-color: #e3f2fd;
+    border-color: #90caf9;
+    outline: 1px solid #64b5f6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Collection styles */
 .collection {
-    background-color: var(--bg-color);
+    background-color: var(--item-bg);
     border-color: var(--border-color);
 }
 
@@ -73,4 +113,4 @@ button:hover {
 
 .item:hover {
     background-color: var(--item-hover-bg);
-} 
+}

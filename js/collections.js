@@ -493,7 +493,11 @@ const collections = {
                 });
 
                 editBtn.addEventListener('click', () => collections.showEditModal(collection.id, collection.name));
-                deleteBtn.addEventListener('click', () => collections.delete(collection.id));
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm(`Are you sure you want to delete the collection "${collection.name}"?`)) {
+                        collections.delete(collection.id);
+                    }
+                });
 
                 buttonsContainer.appendChild(editBtn);
                 buttonsContainer.appendChild(deleteBtn);
