@@ -730,11 +730,61 @@ const collections = {
                 reader.onload = async (e) => {
                     try {
                         // Parse the JSON data
-                        const importedData = JSON.parse(e.target.result);
+                        const rawData = JSON.parse(e.target.result);
+                        let importedData;
+                        
+                        // Helper function to extract domain and create favicon
+                        const createFaviconFromUrl = (urlString) => {
+                            try {
+                                const url = new URL(urlString);
+                                const domain = url.hostname;
+                                return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                            } catch (error) {
+                                console.warn('Error generating favicon for URL:', urlString, error);
+                                return 'icons/default-favicon.png';
+                            }
+                        };
+                        
+                        // Handle different JSON formats
+                        if (Array.isArray(rawData)) {
+                            // Original format: array of collections
+                            importedData = rawData.map(collection => {
+                                // Make sure all items have favicons
+                                if (collection.items && Array.isArray(collection.items)) {
+                                    collection.items = collection.items.map(item => {
+                                        // Only add favicon if it doesn't exist and URL is valid
+                                        if (!item.favicon && item.url) {
+                                            item.favicon = createFaviconFromUrl(item.url);
+                                        }
+                                        return item;
+                                    });
+                                }
+                                return collection;
+                            });
+                        } else if (rawData.version && Array.isArray(rawData.lists)) {
+                            // New format with version and lists
+                            importedData = rawData.lists.map(list => {
+                                return {
+                                    id: utils.generateId(),
+                                    name: list.title,
+                                    items: list.cards.map(card => {
+                                        return {
+                                            id: utils.generateId(),
+                                            title: card.customTitle || card.title,
+                                            url: card.url,
+                                            description: card.customDescription || '',
+                                            favicon: createFaviconFromUrl(card.url)
+                                        };
+                                    })
+                                };
+                            });
+                        } else {
+                            throw new Error('Invalid import format. Expected an array of collections or a JSON object with version and lists.');
+                        }
                         
                         // Validate the imported data
                         if (!Array.isArray(importedData)) {
-                            throw new Error('Invalid import format. Expected an array of collections.');
+                            throw new Error('Failed to process import data.');
                         }
                         
                         // Confirm import with the user

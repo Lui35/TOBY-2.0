@@ -6,7 +6,8 @@ const storage = {
      */
     save: async (data) => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.set(data, () => {
+            // Use local storage instead of sync for larger data capacity
+            chrome.storage.local.set(data, () => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
                 } else {
@@ -23,7 +24,8 @@ const storage = {
      */
     load: async (keys) => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.get(keys, (result) => {
+            // Use local storage instead of sync for larger data capacity
+            chrome.storage.local.get(keys, (result) => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
                 } else {
@@ -40,7 +42,8 @@ const storage = {
      */
     remove: async (keys) => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.remove(keys, () => {
+            // Use local storage instead of sync for larger data capacity
+            chrome.storage.local.remove(keys, () => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
                 } else {
@@ -56,7 +59,8 @@ const storage = {
      */
     clear: async () => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.clear(() => {
+            // Use local storage instead of sync for larger data capacity
+            chrome.storage.local.clear(() => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
                 } else {
