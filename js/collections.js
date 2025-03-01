@@ -21,6 +21,82 @@ const collections = {
             const collectionsContainer = document.getElementById('collections');
             if (collectionsContainer) {
                 utils.makeDroppable(collectionsContainer, collections.handleDrop);
+                
+                // Add ability to reorder collections with drag-and-drop
+                collectionsContainer.addEventListener('dragover', (e) => {
+                    // Only handle collection drags here
+                    const draggedItem = document.querySelector('.collection.dragging');
+                    if (!draggedItem) return;
+                    
+                    e.preventDefault();
+                    
+                    // Find the collection we're dragging over
+                    const allCollections = [...collectionsContainer.querySelectorAll('.collection:not(.dragging)')];
+                    const closestCollection = allCollections.reduce((closest, child) => {
+                        const box = child.getBoundingClientRect();
+                        const offset = e.clientY - (box.top + box.height / 2);
+                        
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset, element: child };
+                        } else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY }).element;
+                    
+                    // Remove existing drop indicators
+                    const existingIndicator = document.querySelector('.collection-drop-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+                    
+                    if (closestCollection) {
+                        // Create drop indicator
+                        const indicator = utils.createElement('div', {
+                            className: 'collection-drop-indicator'
+                        });
+                        collectionsContainer.insertBefore(indicator, closestCollection);
+                        
+                        // Position the dragged item
+                        closestCollection.before(draggedItem);
+                        
+                        // Update data array to match new order
+                        const newOrder = [...document.querySelectorAll('.collection')].map(
+                            el => collections.data.find(c => c.id === el.dataset.id)
+                        ).filter(Boolean);
+                        
+                        if (newOrder.length === collections.data.length) {
+                            collections.data = newOrder;
+                        }
+                    } else if (allCollections.length > 0) {
+                        // If we're at the end of the list
+                        const lastCollection = allCollections[allCollections.length - 1];
+                        
+                        // Create drop indicator
+                        const indicator = utils.createElement('div', {
+                            className: 'collection-drop-indicator'
+                        });
+                        lastCollection.after(indicator);
+                        lastCollection.after(draggedItem);
+                        
+                        // Update data array
+                        const newOrder = [...document.querySelectorAll('.collection')].map(
+                            el => collections.data.find(c => c.id === el.dataset.id)
+                        ).filter(Boolean);
+                        
+                        if (newOrder.length === collections.data.length) {
+                            collections.data = newOrder;
+                        }
+                    }
+                });
+                
+                // Remove drop indicators when dragging ends
+                collectionsContainer.addEventListener('dragend', () => {
+                    const indicator = document.querySelector('.collection-drop-indicator');
+                    if (indicator) {
+                        indicator.remove();
+                    }
+                    collections.save();
+                });
             }
 
             // Add keyboard event listener for reordering
@@ -349,13 +425,17 @@ const collections = {
      */
     create: async (name) => {
         try {
-            const collection = {
+            if (!name) return;
+            
+            const newCollection = {
                 id: utils.generateId(),
-                name: name,
+                name,
                 items: []
             };
-
-            collections.data.push(collection);
+            
+            // Add to beginning of array instead of end
+            collections.data.unshift(newCollection);
+            
             await collections.save();
             collections.render();
         } catch (error) {
@@ -539,6 +619,10 @@ const collections = {
                         }
                     }
                 }
+            } else if (data.type === 'collection') {
+                // Collection reordering is handled by event listeners in init
+                // This is just for completeness if we need to handle collection drops elsewhere
+                collections.save();
             }
         } catch (error) {
             console.error('Error handling drop:', error);
@@ -628,6 +712,28 @@ const collections = {
                 const collectionEl = utils.createElement('div', {
                     className: 'collection',
                     'data-id': collection.id
+                });
+                
+                // Make the collection draggable for reordering
+                collectionEl.setAttribute('draggable', true);
+                collectionEl.addEventListener('dragstart', (e) => {
+                    collectionEl.classList.add('dragging');
+                    // Set data for compatibility with dropzones
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: 'collection',
+                        collectionId: collection.id
+                    }));
+                    
+                    // Delay to ensure drag effect is visible
+                    setTimeout(() => {
+                        collectionEl.style.opacity = '0.4';
+                    }, 0);
+                });
+                
+                collectionEl.addEventListener('dragend', () => {
+                    collectionEl.classList.remove('dragging');
+                    collectionEl.style.opacity = '1';
+                    collections.save(); // Save the new order
                 });
 
                 const header = utils.createElement('div', {

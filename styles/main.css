@@ -108,6 +108,45 @@ button:hover {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease, opacity 0.2s ease;
+    position: relative;
+}
+
+.collection.dragging {
+    cursor: grabbing;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px dashed var(--accent-color);
+    background-color: var(--collection-drag-bg, rgba(0, 0, 0, 0.02));
+    z-index: 100;
+}
+
+.collection:hover {
+    border-color: var(--border-hover-color, #ccc);
+}
+
+.collection .collection-header {
+    cursor: grab;
+    position: relative;
+}
+
+.collection .collection-header::before {
+    content: "☰";
+    position: absolute;
+    left: -5px;
+    color: var(--text-color-secondary, #888);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateX(-10px);
+}
+
+.collection:hover .collection-header::before {
+    opacity: 0.5;
+    transform: translateX(0);
+}
+
+.collection.dragging .collection-header::before {
+    opacity: 0;
 }
 
 .collection-header {
@@ -202,6 +241,40 @@ button:hover {
 .collection:focus-within {
     border-color: var(--accent-color);
     outline: none;
+}
+
+/* Collection drop indicator */
+.collection-drop-indicator {
+    height: 3px;
+    background-color: var(--accent-color, #0075ff);
+    margin: 10px 0;
+    border-radius: 3px;
+    animation: pulse 1.5s infinite;
+    position: relative;
+}
+
+.collection-drop-indicator::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: -8px;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid var(--accent-color, #0075ff);
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
 }
 
 /* Notification */
