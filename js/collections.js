@@ -22,6 +22,71 @@ const collections = {
             if (collectionsContainer) {
                 utils.makeDroppable(collectionsContainer, collections.handleDrop);
                 
+                // Variables for auto-scrolling during drag
+                let autoScrollInterval = null;
+                const scrollThreshold = 300; 
+                let isDragging = false; // Track if we're currently dragging a collection
+                
+                // Function to determine scroll speed based on distance from edge
+                const getScrollSpeed = (distance, threshold) => {
+                    // Calculate a value between 5 and 20 based on how close to the edge
+                    // Closer to edge = faster scrolling
+                    const maxSpeed = 25; 
+                    const minSpeed = 5;
+                    const speedRange = maxSpeed - minSpeed;
+                    
+                    // Convert distance to a percentage of the threshold (0 = at edge, 1 = at threshold)
+                    const percentage = Math.min(distance / threshold, 1);
+                    
+                    // Invert and scale: 0% distance = max speed, 100% distance = min speed
+                    return Math.floor(maxSpeed - (percentage * speedRange));
+                };
+                
+                // Function to handle auto-scrolling
+                const handleAutoScroll = (e) => {
+                    // Only process if we're dragging
+                    if (!isDragging) return;
+                    
+                    // Get window dimensions and mouse position
+                    const windowHeight = window.innerHeight;
+                    const mouseY = e.clientY;
+                    
+                    // Clear any existing scroll interval
+                    if (autoScrollInterval) {
+                        clearInterval(autoScrollInterval);
+                        autoScrollInterval = null;
+                    }
+                    
+                    // If near top of window, scroll up
+                    if (mouseY < scrollThreshold) {
+                        const distanceFromEdge = mouseY;
+                        const speed = getScrollSpeed(distanceFromEdge, scrollThreshold);
+                        
+                        autoScrollInterval = setInterval(() => {
+                            collectionsContainer.scrollTop -= speed;
+                            // Stop scrolling if we've reached the top
+                            if (collectionsContainer.scrollTop <= 0) {
+                                clearInterval(autoScrollInterval);
+                                autoScrollInterval = null;
+                            }
+                        }, 20);
+                    } 
+                    // If near bottom of window, scroll down
+                    else if (mouseY > windowHeight - scrollThreshold) {
+                        const distanceFromEdge = windowHeight - mouseY;
+                        const speed = getScrollSpeed(distanceFromEdge, scrollThreshold);
+                        
+                        autoScrollInterval = setInterval(() => {
+                            collectionsContainer.scrollTop += speed;
+                            // Stop scrolling if we've reached the bottom
+                            if (collectionsContainer.scrollTop + collectionsContainer.clientHeight >= collectionsContainer.scrollHeight) {
+                                clearInterval(autoScrollInterval);
+                                autoScrollInterval = null;
+                            }
+                        }, 20);
+                    }
+                };
+                
                 // Add ability to reorder collections with drag-and-drop
                 collectionsContainer.addEventListener('dragover', (e) => {
                     // Only handle collection drags here
@@ -29,6 +94,9 @@ const collections = {
                     if (!draggedItem) return;
                     
                     e.preventDefault();
+                    
+                    // Handle auto-scrolling
+                    handleAutoScroll(e);
                     
                     // Find the collection we're dragging over
                     const allCollections = [...collectionsContainer.querySelectorAll('.collection:not(.dragging)')];
@@ -89,14 +157,54 @@ const collections = {
                     }
                 });
                 
-                // Remove drop indicators when dragging ends
-                collectionsContainer.addEventListener('dragend', () => {
+                // Handle dragging outside the container - add event listener to the document
+                document.addEventListener('dragover', (e) => {
+                    // Only process if we have a dragging collection
+                    const draggedItem = document.querySelector('.collection.dragging');
+                    if (!draggedItem) return;
+                    
+                    e.preventDefault();
+                    handleAutoScroll(e);
+                });
+                
+                // Stop auto-scrolling when dragging ends or leaves the container
+                collectionsContainer.addEventListener('dragleave', () => {
+                    // Don't clear interval here as we want scrolling to continue 
+                    // even if mouse leaves the container
+                });
+                
+                // Function to start dragging
+                const startDragging = () => {
+                    isDragging = true;
+                };
+                
+                // Function to stop dragging
+                const stopDragging = () => {
+                    isDragging = false;
+                    if (autoScrollInterval) {
+                        clearInterval(autoScrollInterval);
+                        autoScrollInterval = null;
+                    }
+                };
+                
+                collectionsContainer.addEventListener('dragstart', startDragging);
+                collectionsContainer.addEventListener('dragend', (e) => {
+                    stopDragging();
+                    
                     const indicator = document.querySelector('.collection-drop-indicator');
                     if (indicator) {
                         indicator.remove();
                     }
                     collections.save();
                 });
+                
+                // Also handle drop to stop auto-scrolling
+                collectionsContainer.addEventListener('drop', stopDragging);
+                
+                // Handle document-level dragend and drop events to ensure cleanup
+                document.addEventListener('dragstart', startDragging);
+                document.addEventListener('dragend', stopDragging);
+                document.addEventListener('drop', stopDragging);
             }
 
             // Add keyboard event listener for reordering
@@ -735,7 +843,7 @@ const collections = {
                     collectionEl.style.opacity = '1';
                     collections.save(); // Save the new order
                 });
-
+                
                 const header = utils.createElement('div', {
                     className: 'collection-header'
                 });

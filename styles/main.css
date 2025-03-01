@@ -17,6 +17,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Prevent body scrolling */
 }
 
 /* Header */
@@ -26,6 +27,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    z-index: 10;
 }
 
 .header h1 {
@@ -95,12 +97,18 @@ button:hover {
     flex: 1;
     padding: 1rem;
     overflow-y: auto;
+    max-height: calc(100vh - 4rem);
+    scroll-behavior: smooth;
+    position: relative;
 }
 
 .collections {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-height: 100%;
+    position: relative;
+    padding-bottom: 300px;
 }
 
 /* Collection */
@@ -119,6 +127,9 @@ button:hover {
     border: 1px dashed var(--accent-color);
     background-color: var(--collection-drag-bg, rgba(0, 0, 0, 0.02));
     z-index: 100;
+    opacity: 0.8;
+    transform: scale(1.02);
+    position: relative;
 }
 
 .collection:hover {
