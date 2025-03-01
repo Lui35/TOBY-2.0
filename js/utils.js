@@ -61,12 +61,18 @@ const utils = {
             e.preventDefault();
             clearTimeout(dragLeaveTimer);
             element.classList.add('drag-over');
+            
+            // Add drag-target class to collections when dragging over
+            if (element.classList.contains('collection')) {
+                element.classList.add('drag-target');
+            }
         });
 
         element.addEventListener('dragleave', () => {
             // Add a short delay before removing the class to prevent flickering
             dragLeaveTimer = setTimeout(() => {
                 element.classList.remove('drag-over');
+                element.classList.remove('drag-target');
             }, 50); // 50ms delay
         });
 
@@ -74,6 +80,7 @@ const utils = {
             e.preventDefault();
             clearTimeout(dragLeaveTimer);
             element.classList.remove('drag-over');
+            element.classList.remove('drag-target');
             try {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                 onDrop(data);

@@ -424,11 +424,33 @@ const collections = {
      * Add item to collection
      * @param {string} collectionId - Collection ID
      * @param {Object} item - Item to add
+     * @param {boolean} [checkDuplicates=true] - Whether to check for duplicates
      */
-    addItem: async (collectionId, item) => {
+    addItem: async (collectionId, item, checkDuplicates = true) => {
         try {
             const collection = collections.data.find(c => c.id === collectionId);
             if (collection) {
+                // Check for duplicates within the same collection
+                if (checkDuplicates) {
+                    const duplicate = collection.items.find(i => i.url === item.url);
+                    if (duplicate) {
+                        console.log('Item already exists in this collection');
+                        return; // Item already exists in this collection
+                    }
+                    
+                    // Check other collections and remove duplicates if they exist
+                    for (const otherCollection of collections.data) {
+                        if (otherCollection.id !== collectionId) {
+                            const duplicateIndex = otherCollection.items.findIndex(i => i.url === item.url);
+                            if (duplicateIndex !== -1) {
+                                // Remove the item from the other collection
+                                otherCollection.items.splice(duplicateIndex, 1);
+                            }
+                        }
+                    }
+                }
+                
+                // Add the item to the target collection
                 collection.items.push({
                     id: utils.generateId(),
                     ...item
@@ -480,14 +502,47 @@ const collections = {
     handleDrop: (data) => {
         try {
             if (data.type === 'tab') {
-                collections.addItem(data.collectionId, {
+                collections.addItem(data.targetCollectionId, {
                     title: data.title,
                     url: data.url,
                     favicon: data.favicon
                 });
+            } else if (data.type === 'item') {
+                // If this is an item from another collection
+                if (data.collectionId !== data.targetCollectionId) {
+                    // First, get the item data from the source collection
+                    const sourceCollection = collections.data.find(c => c.id === data.collectionId);
+                    const targetCollection = collections.data.find(c => c.id === data.targetCollectionId);
+                    
+                    if (sourceCollection && targetCollection) {
+                        const itemIndex = sourceCollection.items.findIndex(item => item.id === data.itemId);
+                        if (itemIndex !== -1) {
+                            const item = sourceCollection.items[itemIndex];
+                            
+                            // Add item to target collection (will handle duplicate check)
+                            collections.addItem(data.targetCollectionId, {
+                                title: item.title,
+                                url: item.url,
+                                favicon: item.favicon
+                            });
+                            
+                            // Remove item from source collection
+                            sourceCollection.items.splice(itemIndex, 1);
+                            collections.save();
+                            
+                            // Show notification
+                            collections.showNotification(
+                                `Moved "${item.title}" from "${sourceCollection.name}" to "${targetCollection.name}"`,
+                                'success'
+                            );
+                            // Rendering will happen in addItem
+                        }
+                    }
+                }
             }
         } catch (error) {
             console.error('Error handling drop:', error);
+            collections.showNotification('Error moving item', 'error');
         }
     },
 
@@ -521,6 +576,37 @@ const collections = {
         } catch (error) {
             console.error('Error updating item:', error);
         }
+    },
+
+    /**
+     * Show a notification message
+     * @param {string} message - Message to show
+     * @param {string} type - Type of notification ('success', 'error', 'info')
+     */
+    showNotification: (message, type = 'info') => {
+        // Create notification element if it doesn't exist
+        let notification = document.getElementById('notification');
+        if (!notification) {
+            notification = utils.createElement('div', {
+                className: 'notification',
+                id: 'notification'
+            });
+            document.body.appendChild(notification);
+        }
+
+        // Set notification content and type
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'block';
+
+        // Automatically hide after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                notification.style.display = 'none';
+                notification.style.opacity = '1';
+            }, 300);
+        }, 3000);
     },
 
     /**
@@ -653,6 +739,16 @@ const collections = {
                             chrome.tabs.create({ url: item.url });
                         });
 
+                        // Make item draggable
+                        utils.makeDraggable(itemEl, {
+                            type: 'item',
+                            collectionId: collection.id,
+                            itemId: item.id,
+                            title: item.title,
+                            url: item.url,
+                            favicon: item.favicon
+                        });
+
                         itemsContainer.appendChild(itemEl);
                     });
                 }
@@ -662,13 +758,9 @@ const collections = {
                 container.appendChild(collectionEl);
 
                 utils.makeDroppable(collectionEl, (data) => {
-                    if (data.type === 'tab') {
-                        collections.addItem(collection.id, {
-                            title: data.title,
-                            url: data.url,
-                            favicon: data.favicon
-                        });
-                    }
+                    // Pass the collection id to the handleDrop function
+                    data.targetCollectionId = collection.id;
+                    collections.handleDrop(data);
                 });
             });
         } catch (error) {
