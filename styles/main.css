@@ -113,12 +113,13 @@ button:hover {
 
 /* Collection */
 .collection {
-    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+    background-color: #fff;
     border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    transition: all 0.2s ease, opacity 0.2s ease;
-    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    overflow: hidden;
+    padding: 12px;
 }
 
 .collection.dragging {
@@ -164,12 +165,44 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #eee);
+}
+
+.collection-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
+}
+
+.collection-toggle-icon {
+    font-size: 14px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    color: var(--text-color-secondary, #666);
 }
 
 .collection-title {
-    font-size: 1.1rem;
     font-weight: 600;
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.collection-items {
+    padding: 0;
+    min-height: 20px;
+    margin-left: 12px;
 }
 
 /* Items */
@@ -182,27 +215,77 @@ button:hover {
 .item {
     display: flex;
     align-items: center;
-    padding: 0.5rem;
-    border-radius: 4px;
-    background: var(--item-bg);
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+    gap: 8px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    background-color: #fff;
+    border-radius: 6px;
+    border: 1px solid var(--item-border-color, #eee);
+    transition: all 0.15s ease;
 }
 
 .item:hover {
     background: var(--item-hover-bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-color: var(--item-hover-border-color, #ddd);
 }
 
-.item-favicon {
+.item .favicon {
     width: 16px;
     height: 16px;
-    margin-right: 0.5rem;
-    background-color: var(--favicon-bg-color, rgba(255, 255, 255, 0.8));
-    border-radius: 3px;
-    padding: 1px;
-    box-shadow: 0 0 0 1px var(--favicon-border-color, rgba(0, 0, 0, 0.1));
+    min-width: 16px;
     object-fit: contain;
-    filter: var(--favicon-filter);
+}
+
+.item .title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    color: var(--item-title-color, #333);
+}
+
+/* Dark mode text colors */
+@media (prefers-color-scheme: dark) {
+    .item .title {
+        color: var(--dark-text-color, #fff);
+    }
+    
+    .collection-title {
+        color: var(--dark-text-color, #fff);
+    }
+    
+    .collection-toggle-icon {
+        color: var(--dark-text-secondary-color, #bbb);
+    }
+}
+
+.item button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--button-color, #555);
+    transition: all 0.15s ease;
+    opacity: 0;
+}
+
+.item:hover button {
+    opacity: 0.6;
+}
+
+.item button:hover {
+    opacity: 1;
+    background-color: var(--button-hover-bg, #f0f0f0);
+    color: var(--button-hover-color, #333);
 }
 
 /* Tooltip */

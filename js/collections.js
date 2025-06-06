@@ -1,14 +1,56 @@
 const collections = {
     data: [],
     selectedItem: null,
+    collapsedCollections: {},  // Track which collections are collapsed
 
     /**
      * Initialize collections
      */
     init: async () => {
         try {
+            // Load collections data
             const result = await storage.load('collections');
             collections.data = result?.collections || [];
+            
+            // Initialize empty collapsed collections object
+            collections.collapsedCollections = {};
+            
+            // Load collapsed state directly from chrome storage
+            if (chrome?.storage?.local) {
+                // Use a promise to ensure we wait for the data
+                await new Promise((resolve) => {
+                    chrome.storage.local.get(['collapsedCollections'], (result) => {
+                        if (result && result.collapsedCollections) {
+                            console.log('Directly loaded collapsed state:', result.collapsedCollections);
+                            // Get the inner object from our structure
+                            const state = result.collapsedCollections?.collapsedCollections;
+                            if (state && typeof state === 'object') {
+                                collections.collapsedCollections = state;
+                            }
+                        }
+                        resolve();
+                    });
+                });
+            } else {
+                // Fallback to using storage API
+                const collapsedState = await storage.load('collapsedCollections');
+                console.log('Loaded collapsed state via storage API:', collapsedState);
+                
+                if (collapsedState?.collapsedCollections) {
+                    collections.collapsedCollections = collapsedState.collapsedCollections;
+                }
+            }
+            
+            // Set up listener for changes from other tabs
+            if (chrome && chrome.runtime) {
+                chrome.runtime.onMessage.addListener((message) => {
+                    if (message.type === 'collapsedStateUpdated') {
+                        collections.collapsedCollections = message.collapsedCollections || {};
+                        collections.render();
+                    }
+                });
+            }
+            
             collections.render();
 
             // Set up new collection button
@@ -743,10 +785,86 @@ const collections = {
      */
     save: async () => {
         try {
-            await storage.save({ collections: collections.data });
+            await storage.save('collections', { collections: collections.data });
+            return true;
         } catch (error) {
             console.error('Error saving collections:', error);
+            return false;
         }
+    },
+    
+    /**
+     * Save the collapsed state of collections
+     */
+    saveCollapsedState: () => {
+        try {
+            // Make sure we're saving with the proper structure
+            const stateToSave = { collapsedCollections: collections.collapsedCollections || {} };
+            
+            // Direct chrome.storage call to ensure it's saved immediately
+            if (chrome?.storage?.local) {
+                chrome.storage.local.set({ collapsedCollections: stateToSave }, () => {
+                    console.log('Directly saved collapsed state:', stateToSave);
+                });
+            } else {
+                // Fallback to regular storage
+                storage.save('collapsedCollections', stateToSave);
+                console.log('Saved collapsed state via storage API:', stateToSave);
+            }
+            
+            // Broadcast the change for other tabs to sync
+            if (chrome && chrome.runtime) {
+                try {
+                    chrome.runtime.sendMessage({
+                        type: 'collapsedStateUpdated',
+                        collapsedCollections: collections.collapsedCollections
+                    });
+                } catch (e) {
+                    // Ignore error if cannot send message
+                }
+            }
+        } catch (error) {
+            console.error('Error saving collapsed state:', error);
+        }
+    },
+
+    
+    /**
+     * Toggle the collapsed state of a collection
+     * @param {string} collectionId - Collection ID
+     */
+    toggleCollapsed: (collectionId) => {
+        // Toggle the collapsed state
+        if (!collections.collapsedCollections) {
+            collections.collapsedCollections = {};
+        }
+        
+        collections.collapsedCollections[collectionId] = !collections.collapsedCollections[collectionId];
+        console.log(`Toggled collection ${collectionId} to ${collections.collapsedCollections[collectionId] ? 'collapsed' : 'expanded'}`);
+        
+        // Update the UI
+        const collectionEl = document.querySelector(`.collection[data-id="${collectionId}"]`);
+        if (collectionEl) {
+            const itemsContainer = collectionEl.querySelector('.collection-items');
+            const toggleIcon = collectionEl.querySelector('.collection-toggle-icon');
+            const header = collectionEl.querySelector('.collection-header');
+            
+            if (collections.collapsedCollections[collectionId]) {
+                itemsContainer.style.display = 'none';
+                if (toggleIcon) toggleIcon.textContent = '▶';
+                if (header) header.style.borderBottom = 'none';
+            } else {
+                itemsContainer.style.display = '';
+                if (toggleIcon) toggleIcon.textContent = '▼';
+                if (header) header.style.borderBottom = '1px solid var(--border-color, #eee)';
+            }
+            
+            // Add a slight animation effect when toggling
+            collectionEl.style.transition = 'all 0.2s ease';
+        }
+        
+        // Save the collapsed state immediately
+        collections.saveCollapsedState();
     },
 
     /**
@@ -844,115 +962,157 @@ const collections = {
                     collections.save(); // Save the new order
                 });
                 
+                // Create collection header
                 const header = utils.createElement('div', {
                     className: 'collection-header'
                 });
-
+                
+                // Create title container with toggle icon
                 const titleContainer = utils.createElement('div', {
-                    className: 'collection-title-container',
-                    style: 'display: flex; align-items: center; gap: 8px;'
+                    className: 'collection-title-container'
                 });
-
+                
+                // Add toggle icon for expanding/collapsing
+                const toggleIcon = utils.createElement('span', {
+                    className: 'collection-toggle-icon',
+                    textContent: collections.collapsedCollections[collection.id] ? '▶' : '▼'
+                });
+                
                 const title = utils.createElement('div', {
                     className: 'collection-title',
                     textContent: collection.name
                 });
-
+                
+                // Make the title area clickable to toggle collapse
+                titleContainer.addEventListener('click', () => {
+                    collections.toggleCollapsed(collection.id);
+                });
+                
+                titleContainer.appendChild(toggleIcon);
                 titleContainer.appendChild(title);
-
+                
+                // Create buttons container
                 const buttonsContainer = utils.createElement('div', {
                     className: 'collection-header-buttons'
                 });
-
+                
+                // Create edit and delete buttons
                 const editBtn = utils.createElement('button', {
                     className: 'edit-collection',
                     textContent: '✎',
                     title: 'Edit collection'
                 });
-
+                
                 const deleteBtn = utils.createElement('button', {
                     className: 'delete-collection',
                     textContent: '🗑️',
                     title: 'Delete collection'
                 });
-
-                editBtn.addEventListener('click', () => collections.showEditModal(collection.id, collection.name));
-                deleteBtn.addEventListener('click', () => {
+                
+                // Add click handlers to buttons with stopPropagation to prevent toggling collapse
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    collections.showEditModal(collection.id, collection.name);
+                });
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     collections.delete(collection.id);
                 });
-
+                
+                // Add buttons to container
                 buttonsContainer.appendChild(editBtn);
                 buttonsContainer.appendChild(deleteBtn);
-
+                
+                // Add containers to header
                 header.appendChild(titleContainer);
                 header.appendChild(buttonsContainer);
-
+                
+                // Set header border based on collapsed state
+                header.style.borderBottom = collections.collapsedCollections[collection.id] ? 'none' : '1px solid var(--border-color, #eee)';
+                
+                // Create items container
                 const itemsContainer = utils.createElement('div', {
                     className: 'collection-items'
                 });
-
+                
+                // Initially hide items if collection is collapsed
+                if (collections.collapsedCollections[collection.id]) {
+                    itemsContainer.style.display = 'none';
+                }
+                
+                // Add items to collection if they exist
                 if (Array.isArray(collection.items)) {
                     collection.items.forEach(item => {
                         const itemEl = utils.createElement('div', {
                             className: `item${collections.selectedItem?.itemId === item.id ? ' selected' : ''}`,
                             'data-id': item.id
                         });
-
+                        
+                        // Create favicon
                         const favicon = utils.createElement('img', {
                             className: 'favicon',
                             src: item.favicon || 'icons/default-favicon.png'
                         });
-
+                        
+                        // Handle favicon loading errors
                         favicon.addEventListener('error', (e) => {
                             e.target.src = 'icons/default-favicon.png';
                         });
-
+                        
+                        // Create item title
                         const itemTitle = utils.createElement('span', {
                             className: 'title',
                             textContent: item.title
                         });
-
+                        
+                        // Create item buttons
                         const selectBtn = utils.createElement('button', {
                             className: 'select-btn',
                             textContent: '⋮',
                             title: 'Select for reordering'
                         });
-
+                        
+                        const editBtn = utils.createElement('button', {
+                            className: 'edit-btn',
+                            textContent: '✎',
+                            title: 'Edit item'
+                        });
+                        
+                        const removeBtn = utils.createElement('button', {
+                            className: 'remove-item',
+                            textContent: '×',
+                            title: 'Remove item'
+                        });
+                        
+                        // Add button event listeners
                         selectBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             collections.selectItem(collection.id, item.id);
                         });
-
-                        const editBtn = utils.createElement('button', {
-                            className: 'edit-btn',
-                            textContent: '✎'
-                        });
-
+                        
                         editBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             collections.showEditItemModal(collection.id, item.id, item);
                         });
-
-                        const removeBtn = utils.createElement('button', {
-                            className: 'remove-item',
-                            textContent: '×'
-                        });
-
+                        
                         removeBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             collections.removeItem(collection.id, item.id);
                         });
-
+                        
+                        // Assemble item
                         itemEl.appendChild(favicon);
                         itemEl.appendChild(itemTitle);
                         itemEl.appendChild(selectBtn);
                         itemEl.appendChild(editBtn);
                         itemEl.appendChild(removeBtn);
-
+                        
+                        // Add click handler to open tab
                         itemEl.addEventListener('click', () => {
                             chrome.tabs.create({ url: item.url });
                         });
-
+                        
                         // Make item draggable
                         utils.makeDraggable(itemEl, {
                             type: 'item',
@@ -962,15 +1122,20 @@ const collections = {
                             url: item.url,
                             favicon: item.favicon
                         });
-
+                        
+                        // Add item to container
                         itemsContainer.appendChild(itemEl);
                     });
                 }
-
+                
+                // Assemble collection
                 collectionEl.appendChild(header);
                 collectionEl.appendChild(itemsContainer);
+                
+                // Add collection to container
                 container.appendChild(collectionEl);
-
+                
+                // Make collection droppable
                 utils.makeDroppable(collectionEl, (data) => {
                     // Pass the collection id to the handleDrop function
                     data.targetCollectionId = collection.id;
